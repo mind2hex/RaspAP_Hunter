@@ -49,6 +49,37 @@ check_requirements(){
         fi
     done
 
+    # checking ngrok configuration 
+    NGROK_CONFIGURATION_FILE=~/.config/ngrok/ngrok.yml
+    if [[ -e  ${NGROK_CONFIGURATION_FILE} ]];then
+        if [[ -n $( cat ~/.config/ngrok/ngrok.yml | grep -E -o "authtoken.*" | cut -d ' ' -f 2 ) ]];then
+            echo -e "\n[!] NGROK CONFIGURED PROPERLY..."
+        else
+            echo -e "\n[X] NGROK AUTHTOKEN NOT FOUND IN "
+            exit
+        fi
+    else
+        echo -e "\n[X] NGROK CONFIGURATION FILE ${NGROK_CONFIGURATION_FILE} NOT FOUND"
+        exit
+    fi
+    
+    # checking shodan configuration
+    shodan info &>/dev/null
+    if [[ $? -ne 0 ]];then
+        echo -e "\n[X] SHODAN IS NOT CONFIGURED PROPERLY, TRY EXECUTING:"
+        echo -e "\t shodan init <api key>"
+        exit
+    fi
+
+    if [[ $(shodan info | head -n1 | grep -E -o "[0-9]*") -ne 0 ]];then 
+        echo -e "\n[!] SHODAN CONFIGURED PROPERLY"
+    else 
+        echo -e "\n[X] SHODAN SCAN NOT AVAILABLE DUE TO 0 CREDITS SCAN"
+        echo "[X] TRY USING ANOTHER SHODAN API KEY WITH SCAN CREDITS AND EXECUTE:"
+        echo -e "\t shodan init <api key>"
+        exit
+    fi
+
     # check if php-reverse-shell.php is in the current working directory
     echo -e "\n[!] CHECKING PHP REVERSE SHELL"
     if [[ -e "./php-reverse-shell.php" ]];then
